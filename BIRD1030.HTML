@@ -2524,7 +2524,7 @@ function createFlower(x, y) {
                 // FIXED: Check for creatures crossing wind chimes
                 if (windChimeEnabled && audioContext) {
                     const chimeDetectionRadius = 40; // Detection radius around chime
-                    const chimeNotes = ['C5', 'D5', 'E5', 'G5', 'A5'];
+                    const chimeNotes = ['C', 'D', 'E', 'G', 'A'];
 
                     // Check all creatures
                     const allCreatures = [
@@ -2563,7 +2563,7 @@ function createFlower(x, y) {
                     const now = Date.now();
                     if (now - chime.lastChimeTime > chime.chimeInterval) {
                         // Play a soft chime sound
-                        const chimeNotes = ['C5', 'D5', 'E5', 'G5', 'A5'];
+                        const chimeNotes = ['C', 'D', 'E', 'G', 'A'];
                         const randomNote = chimeNotes[Math.floor(Math.random() * chimeNotes.length)];
                         playNote(randomNote, 0.3); // Soft volume
                         chime.lastChimeTime = now;
