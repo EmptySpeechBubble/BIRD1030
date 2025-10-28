@@ -9410,14 +9410,20 @@ if ((isRaining || timeOfDay >= 1) && Math.random() < 0.4) { // 40% chance to see
                                 break;
                             }
 
+                            // V40 CRITICAL FIX: Birds must rest for minimum time before hunger can force them to leave
+                            const minPerchTimeBeforeHungry = 60000; // 60 seconds minimum rest
+                            const canLeaveForHunger = this.stateTimer > minPerchTimeBeforeHungry &&
+                                                     this.hunger > HUNGER_CRITICAL_THRESHOLD - 50;
+
                             if (this.stateTimer > BIRD_STATE_DURATION.PERCHED ||
-                                this.hunger > HUNGER_CRITICAL_THRESHOLD - 50 ||
+                                canLeaveForHunger ||
                                 Math.random() < 0.0001) { // V40: TINY chance to leave perch early - birds need chill!
 
                                 // Decide what to do next
-                                if (this.hunger > HUNGER_CRITICAL_THRESHOLD - 50) {
-                                    // Go find food
+                                if (canLeaveForHunger) {
+                                    // Go find food (but only after resting for 60 seconds)
                                     this.findFoodSource();
+                                    debugLog(`${getBirdName(this)} leaving perch after resting - now hungry`);
                                 } else if (!this.isWild && !this.myNest && twigs.length > 0 && Math.random() < 0.5) {
                                     // Possibly collect nest materials
                                     this.findTwigs();
