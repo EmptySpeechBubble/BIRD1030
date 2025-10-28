@@ -2463,8 +2463,8 @@ function createFlower(x, y) {
                 x: treeX + (Math.random() - 0.5) * 40, // Offset from tree center
                 y: treeY - trunkHeight * 0.7, // Hangs from upper part of tree
                 swingAngle: 0,
-                swingSpeed: 0.02 + Math.random() * 0.02,
-                swingAmplitude: 0.1 + Math.random() * 0.1,
+                swingSpeed: 0.008 + Math.random() * 0.008, // Slowed from 0.02-0.04 to 0.008-0.016 (60% slower)
+                swingAmplitude: 0.08 + Math.random() * 0.08, // Slightly reduced from 0.1-0.2 to 0.08-0.16
                 tubeCount: 4 + Math.floor(Math.random() * 3), // 4-6 tubes
                 treeId: null, // Will be set to tree reference
                 lastChimeTime: Date.now(), // Initialize to current time
@@ -2543,8 +2543,17 @@ function createFlower(x, y) {
                         if (dist < chimeDetectionRadius) {
                             // Creature is near - check if we haven't played sound recently for this entity
                             if (!chime.recentCollisions.has(id)) {
-                                const randomNote = chimeNotes[Math.floor(Math.random() * chimeNotes.length)];
-                                playNote(randomNote, 0.25); // Soft volume
+                                // Play 2-3 notes quickly as creature bumps through chimes
+                                const numNotes = 2 + Math.floor(Math.random() * 2); // 2-3 notes
+                                const startIdx = Math.floor(Math.random() * (chimeNotes.length - 1));
+
+                                for (let i = 0; i < numNotes; i++) {
+                                    setTimeout(() => {
+                                        const noteIdx = (startIdx + i) % chimeNotes.length;
+                                        playNote(chimeNotes[noteIdx], 4);
+                                    }, i * 60); // Quick succession - 60ms apart
+                                }
+
                                 chime.recentCollisions.add(id);
 
                                 // Clear this collision after 1 second
@@ -2558,18 +2567,8 @@ function createFlower(x, y) {
                     });
                 }
 
-                // Random gentle chiming when wind chimes are enabled (like real wind chimes)
-                if (windChimeEnabled && audioContext) {
-                    const now = Date.now();
-                    if (now - chime.lastChimeTime > chime.chimeInterval) {
-                        // Play a soft chime sound
-                        const chimeNotes = ['C', 'D', 'E', 'G', 'A'];
-                        const randomNote = chimeNotes[Math.floor(Math.random() * chimeNotes.length)];
-                        playNote(randomNote, 0.3); // Soft volume
-                        chime.lastChimeTime = now;
-                        chime.chimeInterval = 15000 + Math.random() * 30000; // 15-45 seconds for realistic timing
-                    }
-                }
+                // NOTE: Automatic wind chiming is handled by playWindChimes() function
+                // Only creature collisions trigger notes here (see above)
             });
         }
 
@@ -17736,49 +17735,26 @@ function spawnOwls() {
         // Notes for wind chimes (pentatonic scale for more pleasant sound)
         const notes = ['C', 'D', 'E', 'G', 'A'];
 
-        // Choose what to play - cascading sequences for wind chime realism
-        const playType = Math.random();
+        // WIND PASSING THROUGH: Play 2-4 notes in sequence as if wind passes through the chimes
+        const numNotes = 2 + Math.floor(Math.random() * 3); // 2-4 notes
+        const startIdx = Math.floor(Math.random() * (notes.length - numNotes + 1));
+        const direction = Math.random() < 0.5 ? 1 : -1; // Ascending or descending
 
-        // DEBUG LOG to confirm wind chimes are playing
-        debugLog(`Playing wind chimes (${now - windChimeStartTime}ms since started)`);
-
-        if (playType < 0.2) {
-            // Single bright note
-            const note = notes[Math.floor(Math.random() * notes.length)];
-            debugLog(`Wind chime sound: ${note}`);
-            playNote(note, 5);
-        } else if (playType < 0.5) {
-            // Two-note cascade (descending or ascending)
-            const idx = Math.floor(Math.random() * (notes.length - 1));
-            const ascending = Math.random() < 0.5;
-            const note1 = notes[ascending ? idx : idx + 1];
-            const note2 = notes[ascending ? idx + 1 : idx];
-
-            debugLog(`Wind chime cascade: ${note1}-${note2}`);
-            playNote(note1, 5);
-            setTimeout(() => { playNote(note2, 5); }, 80 + Math.random() * 60);
-        } else if (playType < 0.75) {
-            // Three-note cascade with overlapping shimmer
-            const startIdx = Math.floor(Math.random() * (notes.length - 2));
-            const note1 = notes[startIdx];
-            const note2 = notes[startIdx + 1];
-            const note3 = notes[startIdx + 2];
-
-            debugLog(`Wind chime cascade: ${note1}-${note2}-${note3}`);
-            playNote(note1, 6);
-            setTimeout(() => { playNote(note2, 6); }, 60 + Math.random() * 40);
-            setTimeout(() => { playNote(note3, 5.5); }, 120 + Math.random() * 60);
-        } else {
-            // Rich cascading arpeggio (4-5 notes)
-            const pattern = Math.random() < 0.5 ? [0, 2, 4, 2, 0] : [0, 1, 2, 3, 4];
-            debugLog(`Wind chime arpeggio: ${pattern.map(i => notes[i]).join('-')}`);
-
-            pattern.forEach((noteIdx, i) => {
-                setTimeout(() => {
-                    playNote(notes[noteIdx], 6 - i * 0.2);
-                }, i * (50 + Math.random() * 30));
-            });
+        // Build sequence of notes
+        const sequence = [];
+        for (let i = 0; i < numNotes; i++) {
+            const noteIdx = direction > 0 ? startIdx + i : startIdx + numNotes - 1 - i;
+            sequence.push(notes[noteIdx]);
         }
+
+        debugLog(`Wind passing through chimes: ${sequence.join('-')}`);
+
+        // Play notes in sequence with natural timing
+        sequence.forEach((note, i) => {
+            setTimeout(() => {
+                playNote(note, 5 + Math.random() * 1);
+            }, i * (100 + Math.random() * 50)); // 100-150ms between notes
+        });
         
         lastWindChimeTime = now;
 
