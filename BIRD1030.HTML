@@ -2506,7 +2506,19 @@ function createFlower(x, y) {
                         // Remove tree association while falling
                         chime.treeId = null;
                     } else {
-                        // Landed on ground
+                        // Landed on ground - play jumbled notes if not already played
+                        if (!chime.hasPlayedFallSound && windChimeEnabled && audioContext) {
+                            chime.hasPlayedFallSound = true;
+                            // Play 4-6 random jumbled notes quickly (chaotic crash sound)
+                            const notes = ['C', 'D', 'E', 'G', 'A'];
+                            const numNotes = 4 + Math.floor(Math.random() * 3);
+                            for (let i = 0; i < numNotes; i++) {
+                                setTimeout(() => {
+                                    const randomNote = notes[Math.floor(Math.random() * notes.length)];
+                                    playNote(randomNote, 2);
+                                }, i * (30 + Math.random() * 40)); // Chaotic timing 30-70ms apart
+                            }
+                        }
                         chime.y = groundLevel;
                         chime.falling = false;
                         chime.fallVelocity = 0;
@@ -20707,12 +20719,13 @@ if (gameboy) {
             magicMushroom.clicked = true;
             
             // Play a magical sound if wind chimes are enabled
+            // Play pleasant windchime cascade on clock click
             if (windChimeEnabled && audioContext) {
-                const notes = ['C4', 'E4', 'G4', 'C5'];
+                const notes = ['C', 'E', 'G', 'A', 'C']; // Pentatonic cascade
                 for (let i = 0; i < notes.length; i++) {
                     setTimeout(() => {
-                        playNote(notes[i], 1);
-                    }, i * 150);
+                        playNote(notes[i], 3);
+                    }, i * 100);
                 }
             }
             
@@ -20723,6 +20736,16 @@ if (gameboy) {
     // Use the scaled coordinates - mark as player-added for bird priority
     scatterFood(scaledX, scaledY, 3, true);
     debugLog(`Food scattered at web coordinates (${scaledX}, ${scaledY})`);
+
+    // Play gentle windchime notes on food scatter (like a pleasant feedback sound)
+    if (windChimeEnabled && audioContext && windChimeSounds) {
+        const notes = ['C', 'D', 'E']; // Quick 3-note cascade
+        notes.forEach((note, i) => {
+            setTimeout(() => {
+                playNote(note, 3);
+            }, i * 80);
+        });
+    }
 });
 
 // Enhanced: Mouse move handler for bird hover detection
