@@ -17154,13 +17154,13 @@ function spawnOwls() {
             try {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 
-                // Define wind chime frequencies based on pentatonic scale
+                // Define wind chime frequencies based on pentatonic scale - OCTAVE HIGHER for brighter sound
                 windChimeSounds = {
-                    'C': 261.63, // C4
-                    'D': 293.66, // D4
-                    'E': 329.63, // E4
-                    'G': 392.00, // G4
-                    'A': 440.00  // A4
+                    'C': 523.25, // C5 (was C4 261.63)
+                    'D': 587.33, // D5 (was D4 293.66)
+                    'E': 659.25, // E5 (was E4 329.63)
+                    'G': 783.99, // G5 (was G4 392.00)
+                    'A': 880.00  // A5 (was A4 440.00)
                 };
                 
                 debugLog("Audio context initialized");
@@ -17647,42 +17647,54 @@ function spawnOwls() {
             }
 
             try {
-                // Create oscillator for main tone
+                // Create main oscillator with slight detuning for shimmer
                 const oscillator = audioContext.createOscillator();
                 const gainNode = audioContext.createGain();
-
-                // Create a second oscillator for harmonics (metallic quality)
-                const harmonicOsc = audioContext.createOscillator();
-                const harmonicGain = audioContext.createGain();
-
-                // Set type and frequency
                 oscillator.type = 'sine';
                 oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
 
-                // Harmonic oscillator (higher frequency for metallic sound)
-                harmonicOsc.type = 'sine';
-                harmonicOsc.frequency.setValueAtTime(frequency * 2.7, audioContext.currentTime); // Upper harmonic
-                harmonicGain.gain.setValueAtTime(0, audioContext.currentTime);
-                harmonicGain.gain.linearRampToValueAtTime(0.05, audioContext.currentTime + 0.1); // Reduced from 0.07 (25% reduction)
-                harmonicGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + duration);
+                // Create multiple harmonic overtones for metallic wind chime quality
+                const harmonics = [
+                    { mult: 2.76, gain: 0.08 },  // Inharmonic overtone (metallic)
+                    { mult: 5.4, gain: 0.04 },   // Higher metallic overtone
+                    { mult: 8.93, gain: 0.02 }   // Shimmer overtone
+                ];
 
-                // Connect nodes
+                const harmonicOscillators = harmonics.map(h => {
+                    const osc = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+                    osc.type = 'sine';
+                    // Add slight detuning for shimmer effect
+                    osc.frequency.setValueAtTime(frequency * h.mult + (Math.random() - 0.5) * 2, audioContext.currentTime);
+
+                    // Quick attack, long decay for metallic ring
+                    gain.gain.setValueAtTime(0, audioContext.currentTime);
+                    gain.gain.linearRampToValueAtTime(h.gain, audioContext.currentTime + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration * 0.9);
+                    gain.gain.linearRampToValueAtTime(0, audioContext.currentTime + duration);
+
+                    osc.connect(gain);
+                    gain.connect(audioContext.destination);
+                    return { osc, gain };
+                });
+
+                // Connect main oscillator
                 oscillator.connect(gainNode);
                 gainNode.connect(audioContext.destination);
-                harmonicOsc.connect(harmonicGain);
-                harmonicGain.connect(audioContext.destination);
 
-                // Set envelope for wind chime sound with 25% reduced volume
+                // Bright, fast attack with long sustain for wind chime character
                 gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-                gainNode.gain.linearRampToValueAtTime(0.15, audioContext.currentTime + 0.2); // Reduced from 0.2 (25% reduction)
-                gainNode.gain.exponentialRampToValueAtTime(0.0075, audioContext.currentTime + duration * 0.8); // Reduced from 0.01
+                gainNode.gain.linearRampToValueAtTime(0.18, audioContext.currentTime + 0.01); // Very fast attack
+                gainNode.gain.exponentialRampToValueAtTime(0.006, audioContext.currentTime + duration * 0.85); // Long shimmer
                 gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + duration);
 
-                // Start and stop
+                // Start all oscillators
                 oscillator.start();
-                harmonicOsc.start();
+                harmonicOscillators.forEach(h => h.osc.start());
+
+                // Stop all oscillators
                 oscillator.stop(audioContext.currentTime + duration);
-                harmonicOsc.stop(audioContext.currentTime + duration);
+                harmonicOscillators.forEach(h => h.osc.stop(audioContext.currentTime + duration));
             } catch (e) {
                 console.error("Error playing note:", e);
             }
@@ -17723,39 +17735,49 @@ function spawnOwls() {
     if (now - lastWindChimeTime > 15000 + Math.random() * 30000) {
         // Notes for wind chimes (pentatonic scale for more pleasant sound)
         const notes = ['C', 'D', 'E', 'G', 'A'];
-        
-        // Choose what to play - single note, harmonic interval, or chord
+
+        // Choose what to play - cascading sequences for wind chime realism
         const playType = Math.random();
-        
+
         // DEBUG LOG to confirm wind chimes are playing
         debugLog(`Playing wind chimes (${now - windChimeStartTime}ms since started)`);
-        
-        if (playType < 0.5) {
-            // Play a single note
+
+        if (playType < 0.2) {
+            // Single bright note
             const note = notes[Math.floor(Math.random() * notes.length)];
             debugLog(`Wind chime sound: ${note}`);
-            playNote(note, 4);
-        } else if (playType < 0.8) {
-            // Play harmonic intervals (two notes)
-            const note1 = notes[Math.floor(Math.random() * notes.length)];
-            const note2 = notes[(notes.indexOf(note1) + 2) % notes.length]; // Musical interval
-            
-            debugLog(`Wind chime harmony: ${note1}-${note2}`);
-            playNote(note1, 4);
-            setTimeout(() => { playNote(note2, 4); }, 200);
-        } else {
-            // Play a chord with slight timing differences for realism
-            const rootIndex = Math.floor(Math.random() * notes.length);
-            const note1 = notes[rootIndex];
-            const note2 = notes[(rootIndex + 2) % notes.length];
-            const note3 = notes[(rootIndex + 4) % notes.length];
-            
-            debugLog(`Wind chime chord: ${note1}-${note2}-${note3}`);
-            
-            // Stagger notes slightly for natural wind effect
+            playNote(note, 5);
+        } else if (playType < 0.5) {
+            // Two-note cascade (descending or ascending)
+            const idx = Math.floor(Math.random() * (notes.length - 1));
+            const ascending = Math.random() < 0.5;
+            const note1 = notes[ascending ? idx : idx + 1];
+            const note2 = notes[ascending ? idx + 1 : idx];
+
+            debugLog(`Wind chime cascade: ${note1}-${note2}`);
             playNote(note1, 5);
-            setTimeout(() => { playNote(note2, 4.5); }, 50 + Math.random() * 100);
-            setTimeout(() => { playNote(note3, 4); }, 150 + Math.random() * 150);
+            setTimeout(() => { playNote(note2, 5); }, 80 + Math.random() * 60);
+        } else if (playType < 0.75) {
+            // Three-note cascade with overlapping shimmer
+            const startIdx = Math.floor(Math.random() * (notes.length - 2));
+            const note1 = notes[startIdx];
+            const note2 = notes[startIdx + 1];
+            const note3 = notes[startIdx + 2];
+
+            debugLog(`Wind chime cascade: ${note1}-${note2}-${note3}`);
+            playNote(note1, 6);
+            setTimeout(() => { playNote(note2, 6); }, 60 + Math.random() * 40);
+            setTimeout(() => { playNote(note3, 5.5); }, 120 + Math.random() * 60);
+        } else {
+            // Rich cascading arpeggio (4-5 notes)
+            const pattern = Math.random() < 0.5 ? [0, 2, 4, 2, 0] : [0, 1, 2, 3, 4];
+            debugLog(`Wind chime arpeggio: ${pattern.map(i => notes[i]).join('-')}`);
+
+            pattern.forEach((noteIdx, i) => {
+                setTimeout(() => {
+                    playNote(notes[noteIdx], 6 - i * 0.2);
+                }, i * (50 + Math.random() * 30));
+            });
         }
         
         lastWindChimeTime = now;
