@@ -20698,6 +20698,29 @@ if (gameboy) {
         return; // Don't scatter food when unlocking
     }
 
+    // Check if windchime was clicked
+    if (windChimes && windChimes.length > 0) {
+        for (const chime of windChimes) {
+            const chimeDist = Math.sqrt(
+                Math.pow(scaledX - chime.x, 2) +
+                Math.pow(scaledY - chime.y, 2)
+            );
+            if (chimeDist < 40) { // 40px click radius
+                // Play a quick cascade when clicking on windchime directly
+                if (windChimeEnabled && audioContext) {
+                    const notes = ['C', 'D', 'E', 'G']; // 4-note cascade
+                    notes.forEach((note, i) => {
+                        setTimeout(() => {
+                            playNote(note, 3);
+                        }, i * 70);
+                    });
+                }
+                debugLog(`Clicked on windchime at (${chime.x}, ${chime.y})`);
+                return; // Don't scatter food when clicking windchime
+            }
+        }
+    }
+
     // ADD THIS CODE: Check if magic mushroom was clicked
     if (magicMushroom && !mushroomMode) {
         const distance = Math.sqrt(
