@@ -2463,8 +2463,8 @@ function createFlower(x, y) {
                 x: treeX + (Math.random() - 0.5) * 40, // Offset from tree center
                 y: treeY - trunkHeight * 0.7, // Hangs from upper part of tree
                 swingAngle: 0,
-                swingSpeed: 0.008 + Math.random() * 0.008, // Slowed from 0.02-0.04 to 0.008-0.016 (60% slower)
-                swingAmplitude: 0.08 + Math.random() * 0.08, // Slightly reduced from 0.1-0.2 to 0.08-0.16
+                swingSpeed: 0.004 + Math.random() * 0.004, // Further slowed to 0.004-0.008 (80% slower than original)
+                swingAmplitude: 0.04 + Math.random() * 0.04, // Further reduced to 0.04-0.08 (gentle sway)
                 tubeCount: 4 + Math.floor(Math.random() * 3), // 4-6 tubes
                 treeId: null, // Will be set to tree reference
                 lastChimeTime: Date.now(), // Initialize to current time
@@ -17742,8 +17742,8 @@ function spawnOwls() {
     // Update wind chime state
     const now = Date.now();
 
-    // IMPROVED TIMING: Less frequent chimes for more natural sound (15-45 seconds)
-    if (now - lastWindChimeTime > 15000 + Math.random() * 30000) {
+    // IMPROVED TIMING: More frequent chimes for better audio feedback (8-20 seconds)
+    if (now - lastWindChimeTime > 8000 + Math.random() * 12000) {
         // Notes for wind chimes (pentatonic scale for more pleasant sound)
         const notes = ['C', 'D', 'E', 'G', 'A'];
 
