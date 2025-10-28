@@ -17775,8 +17775,8 @@ function spawnOwls() {
             clearTimeout(windChimeTimeout);
         }
 
-        // Calculate random delay between 15-45 seconds
-        const nextChimeDelay = 15000 + Math.random() * 30000;
+        // Calculate random delay between 8-20 seconds (matches timing check above)
+        const nextChimeDelay = 8000 + Math.random() * 12000;
         debugLog(`Scheduling next wind chime in ${Math.round(nextChimeDelay/1000)} seconds`);
 
         windChimeTimeout = setTimeout(() => {
@@ -17784,20 +17784,6 @@ function spawnOwls() {
             playWindChimes();
         }, nextChimeDelay);
     }
-    
-    // Check if wind chimes
-    
-    // Directly turn off wind chimes instead of calling non-existent function
-    windChimeEnabled = false;
-    
-    // Stop any pending wind chimes
-    if (windChimeTimeout) {
-        clearTimeout(windChimeTimeout);
-        windChimeTimeout = null;
-    }
-    
-    windChimeStartTime = 0;
-    lastWindChimeTime = 0;
     
     // Update button text
     const toggleWindChimeBtn = document.getElementById('toggleWindChimeBtn');
