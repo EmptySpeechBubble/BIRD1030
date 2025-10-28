@@ -4396,6 +4396,7 @@ document.addEventListener('visibilitychange', function() {
                                 nest.x = tree.x + offsetX;
                                 nest.y = tree.y + offsetY;
                                 nest.tree = tree; // Ensure reference is maintained
+                                nest.treeId = tree.id; // Update treeId to match
                             }
                         });
 
@@ -5582,6 +5583,7 @@ currentHour = Math.floor(((timeOfDay < 1 ? timeOfDay * 12 : 12 + (timeOfDay - 1)
         class Nest {
             constructor(tree, x, y) {
                 this.tree = tree;
+                this.treeId = tree ? tree.id : null; // Store tree ID for resize tracking
                 this.x = x;
                 this.y = y;
                 this.materialsCollected = 0;
@@ -9388,13 +9390,13 @@ if ((isRaining || timeOfDay >= 1) && Math.random() < 0.4) { // 40% chance to see
                             }
 
                             // PRIORITY: Check for player-added food FIRST (even when not hungry)
-                            // V40 FIX: Only check after minimum perch time (3 seconds) so birds settle first
+                            // V40 FIX: Only check after substantial perch time (90 seconds) so birds actually rest first
                             const playerFoodFromPerch = foodItems.find(f => f.playerAdded &&
                                 distance(this.x, this.y, f.x, f.y) < 400 &&
                                 !this.isDangerZone(f.x, f.y));
 
-                            if (playerFoodFromPerch && this.stateTimer > 3000 && Math.random() < 0.80) {
-                                // 80% chance to leave perch for player food after 3 seconds settled
+                            if (playerFoodFromPerch && this.stateTimer > 90000 && Math.random() < 0.15) {
+                                // 15% chance to leave perch for player food after 90 seconds resting
                                 this.target = {
                                     type: 'food',
                                     food: playerFoodFromPerch,
@@ -17739,71 +17741,19 @@ function spawnOwls() {
         
         lastWindChimeTime = now;
 
-        // Schedule next chime (with debug log to confirm the timeout is working)
-        clearTimeout(windChimeTimeout); // Clear any existing timeout to be safe
+        // Schedule next chime with a simple timeout
+        if (windChimeTimeout) {
+            clearTimeout(windChimeTimeout);
+        }
 
-        debugLog(`Scheduling next wind chime in 15-45 seconds`);
-        // Use a recurring interval instead of a single timeout for more reliability
-        windChimeTimeout = setInterval(() => {
-            // The interval will call this function every 5 seconds
-            // But we'll only actually play a chime when it's time
-            const checkNow = Date.now();
-            if (checkNow - lastWindChimeTime > 15000 + (Math.random() * 30000)) {
-                // CRITICAL: Check if wind chime is visible before playing
-                const hasVisibleChime = windChimes.some(chime =>
-                    chime.x >= -100 && chime.x <= canvas.width + 100
-                );
+        // Calculate random delay between 15-45 seconds
+        const nextChimeDelay = 15000 + Math.random() * 30000;
+        debugLog(`Scheduling next wind chime in ${Math.round(nextChimeDelay/1000)} seconds`);
 
-                if (!hasVisibleChime) {
-                    debugLog("Wind chime not visible - skipping chime sound");
-                    lastWindChimeTime = checkNow; // Update time to prevent rapid checking
-                    return;
-                }
-
-                debugLog("Wind chime timer triggered - time to play");
-                // Don't call playWindChimes() recursively - that could stack
-                // Instead, directly play the chime sounds here
-
-                // Notes for wind chimes (pentatonic scale for more pleasant sound)
-                const notes = ['C', 'D', 'E', 'G', 'A'];
-                
-                // Choose what to play - single note, harmonic interval, or chord
-                const playType = Math.random();
-                
-                if (playType < 0.5) {
-                    // Play a single note
-                    const note = notes[Math.floor(Math.random() * notes.length)];
-                    debugLog(`Wind chime sound: ${note}`);
-                    playNote(note, 4);
-                } else if (playType < 0.8) {
-                    // Play harmonic intervals (two notes)
-                    const note1 = notes[Math.floor(Math.random() * notes.length)];
-                    const note2 = notes[(notes.indexOf(note1) + 2) % notes.length]; // Musical interval
-                    
-                    debugLog(`Wind chime harmony: ${note1}-${note2}`);
-                    playNote(note1, 4);
-                    setTimeout(() => { playNote(note2, 4); }, 200);
-                } else {
-                    // Play a chord with slight timing differences for realism
-                    const rootIndex = Math.floor(Math.random() * notes.length);
-                    const note1 = notes[rootIndex];
-                    const note2 = notes[(rootIndex + 2) % notes.length];
-                    const note3 = notes[(rootIndex + 4) % notes.length];
-                    
-                    debugLog(`Wind chime chord: ${note1}-${note2}-${note3}`);
-                    
-                    // Stagger notes slightly for natural wind effect
-                    playNote(note1, 5);
-                    setTimeout(() => { playNote(note2, 4.5); }, 50 + Math.random() * 100);
-                    setTimeout(() => { playNote(note3, 4); }, 150 + Math.random() * 150);
-                }
-                
-                lastWindChimeTime = checkNow;
-            }
-        }, 5000); // Check every 5 seconds, but only play at appropriate intervals
-        
-        // Add it to animation timers for proper cleanup
-        addTimer(windChimeTimeout, true); // true = is interval (not timeout)
+        windChimeTimeout = setTimeout(() => {
+            // Recursively call playWindChimes to play next sound and schedule the next one
+            playWindChimes();
+        }, nextChimeDelay);
     }
     
     // Check if wind chimes
