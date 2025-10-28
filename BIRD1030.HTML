@@ -17633,6 +17633,19 @@ function spawnOwls() {
         function playNote(note, duration = 4) {
             if (!audioContext) return;
 
+            // CRITICAL: Safety check - ensure windChimeSounds exists and note is valid
+            if (!windChimeSounds || !windChimeSounds[note]) {
+                console.warn(`Wind chime note "${note}" not found in windChimeSounds`);
+                return;
+            }
+
+            // Verify frequency is a valid number
+            const frequency = windChimeSounds[note];
+            if (!isFinite(frequency) || frequency <= 0) {
+                console.error(`Invalid frequency for note "${note}": ${frequency}`);
+                return;
+            }
+
             try {
                 // Create oscillator for main tone
                 const oscillator = audioContext.createOscillator();
@@ -17644,11 +17657,11 @@ function spawnOwls() {
 
                 // Set type and frequency
                 oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(windChimeSounds[note], audioContext.currentTime);
+                oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
 
                 // Harmonic oscillator (higher frequency for metallic sound)
                 harmonicOsc.type = 'sine';
-                harmonicOsc.frequency.setValueAtTime(windChimeSounds[note] * 2.7, audioContext.currentTime); // Upper harmonic
+                harmonicOsc.frequency.setValueAtTime(frequency * 2.7, audioContext.currentTime); // Upper harmonic
                 harmonicGain.gain.setValueAtTime(0, audioContext.currentTime);
                 harmonicGain.gain.linearRampToValueAtTime(0.05, audioContext.currentTime + 0.1); // Reduced from 0.07 (25% reduction)
                 harmonicGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + duration);
