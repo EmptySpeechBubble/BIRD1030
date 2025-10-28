@@ -17653,11 +17653,11 @@ function spawnOwls() {
                 oscillator.type = 'sine';
                 oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
 
-                // Create multiple harmonic overtones for metallic wind chime quality
+                // Create multiple harmonic overtones for metallic wind chime quality - REDUCED VOLUME
                 const harmonics = [
-                    { mult: 2.76, gain: 0.08 },  // Inharmonic overtone (metallic)
-                    { mult: 5.4, gain: 0.04 },   // Higher metallic overtone
-                    { mult: 8.93, gain: 0.02 }   // Shimmer overtone
+                    { mult: 2.76, gain: 0.025 },  // Inharmonic overtone (metallic) - reduced from 0.08
+                    { mult: 5.4, gain: 0.012 },   // Higher metallic overtone - reduced from 0.04
+                    { mult: 8.93, gain: 0.006 }   // Shimmer overtone - reduced from 0.02
                 ];
 
                 const harmonicOscillators = harmonics.map(h => {
@@ -17682,10 +17682,10 @@ function spawnOwls() {
                 oscillator.connect(gainNode);
                 gainNode.connect(audioContext.destination);
 
-                // Bright, fast attack with long sustain for wind chime character
+                // Bright, fast attack with long sustain for wind chime character - REDUCED VOLUME
                 gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-                gainNode.gain.linearRampToValueAtTime(0.18, audioContext.currentTime + 0.01); // Very fast attack
-                gainNode.gain.exponentialRampToValueAtTime(0.006, audioContext.currentTime + duration * 0.85); // Long shimmer
+                gainNode.gain.linearRampToValueAtTime(0.06, audioContext.currentTime + 0.01); // Very fast attack - reduced from 0.18
+                gainNode.gain.exponentialRampToValueAtTime(0.002, audioContext.currentTime + duration * 0.85); // Long shimmer - reduced from 0.006
                 gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + duration);
 
                 // Start all oscillators
